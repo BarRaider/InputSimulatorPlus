@@ -81,6 +81,7 @@ namespace WindowsInput
         public static bool IsExtendedKey(VirtualKeyCode keyCode)
         {
             if (keyCode == VirtualKeyCode.MENU ||
+                //keyCode == VirtualKeyCode.LMENU ||
                 keyCode == VirtualKeyCode.RMENU ||
                 keyCode == VirtualKeyCode.CONTROL ||
                 keyCode == VirtualKeyCode.RCONTROL ||
@@ -114,6 +115,11 @@ namespace WindowsInput
         /// <returns>This <see cref="InputBuilder"/> instance.</returns>
         public InputBuilder AddKeyDown(VirtualKeyCode keyCode)
         {
+            // The specification says Scan is unused unless we are using KEYEVENTF_UNICODE or KEYEVENTF_SCANCODE.
+            // However, some applications like Microsoft's Remote Desktop Client assume it is the scan code, even
+            // when KEYEVENTF_SCANCODE is not set.  Set the value to work around these buggy apps.
+            ushort scan = (ushort)NativeMethods.MapVirtualKey((uint)keyCode, NativeMethods.MapVirtualKeyMapTypes.MapvkVkToVsc);
+
             var down =
                 new INPUT
                     {
@@ -124,8 +130,10 @@ namespace WindowsInput
                                     new KEYBDINPUT
                                         {
                                             KeyCode = (UInt16) keyCode,
-                                            Scan = (UInt16)(NativeMethods.MapVirtualKey((UInt32)keyCode, 0) & 0xFFU),
-                                            Flags = IsExtendedKey(keyCode) ? (UInt32) KeyboardFlag.ExtendedKey : 0,
+                                        //Scan = (UInt16)(NativeMethods.MapVirtualKey((UInt32)keyCode, 0) & 0xFFU),
+                                        //Flags = IsExtendedKey(keyCode) ? (UInt32) KeyboardFlag.ExtendedKey : 0,
+                                        Scan = scan,
+                                        Flags = (scan > 0x7F) ? (uint) KeyboardFlag.ExtendedKey : 0,
                                             Time = 0,
                                             ExtraInfo = IntPtr.Zero
                                         }
@@ -143,6 +151,10 @@ namespace WindowsInput
         /// <returns>This <see cref="InputBuilder"/> instance.</returns>
         public InputBuilder AddKeyUp(VirtualKeyCode keyCode)
         {
+            // The specification says Scan is unused unless we are using KEYEVENTF_UNICODE or KEYEVENTF_SCANCODE.
+            // However, some applications like Microsoft's Remote Desktop Client assume it is the scan code, even
+            // when KEYEVENTF_SCANCODE is not set.  Set the value to work around these buggy apps.
+            ushort scan = (ushort)NativeMethods.MapVirtualKey((uint)keyCode, NativeMethods.MapVirtualKeyMapTypes.MapvkVkToVsc);
             var up =
                 new INPUT
                     {
@@ -153,8 +165,10 @@ namespace WindowsInput
                                     new KEYBDINPUT
                                         {
                                             KeyCode = (UInt16) keyCode,
-                                            Scan = (UInt16)(NativeMethods.MapVirtualKey((UInt32)keyCode, 0) & 0xFFU),
-                                            Flags = (UInt32) (IsExtendedKey(keyCode)
+                                            //Scan = (UInt16)(NativeMethods.MapVirtualKey((UInt32)keyCode, 0) & 0xFFU),
+                                            //Flags = (UInt32) (IsExtendedKey(keyCode)
+                                            Scan = scan,
+                                            Flags = (uint)((scan > 0x7F)
                                                                   ? KeyboardFlag.KeyUp | KeyboardFlag.ExtendedKey
                                                                   : KeyboardFlag.KeyUp),
                                             Time = 0,
@@ -446,6 +460,82 @@ namespace WindowsInput
             return this;
         }
 
+        #region DIK scancodes
+        /// <summary>
+        /// Adds a key down to the list of <see cref="Input"/> messages.
+        /// </summary>
+        /// <param name="dikCode">The <see cref="DirectInputKeyCode"/>.</param>
+        /// <returns>This <see cref="InputBuilder"/> instance.</returns>
+        public InputBuilder AddKeyDown(DirectInputKeyCode dikCode)
+        {
+            var down =
+                new INPUT
+                {
+                    Type = (uint)InputType.Keyboard,
+                    Data =
+                    {
+                        Keyboard =
+                            new KEYBDINPUT
+                            {
+                                KeyCode = 0,
+                                Scan = (ushort)dikCode,
+                                Flags = (uint)(((ushort)dikCode > 0x7F)
+                                                      ? KeyboardFlag.ScanCode | KeyboardFlag.ExtendedKey
+                                                      : KeyboardFlag.ScanCode),
+                                Time = 0,
+                                ExtraInfo = IntPtr.Zero
+                            }
+                    }
+                };
+
+            _inputList.Add(down);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a key up to the list of <see cref="Input"/> messages.
+        /// </summary>
+        /// <param name="dikCode">The <see cref="DirectInputKeyCode"/>.</param>
+        /// <returns>This <see cref="InputBuilder"/> instance.</returns>
+        public InputBuilder AddKeyUp(DirectInputKeyCode dikCode)
+        {
+            var up =
+                new INPUT
+                {
+                    Type = (uint)InputType.Keyboard,
+                    Data =
+                    {
+                        Keyboard =
+                            new KEYBDINPUT
+                            {
+                                KeyCode = 0,
+                                Scan = (ushort)dikCode,
+                                Flags = (uint)(((ushort)dikCode > 0x7F)
+                                                      ? KeyboardFlag.ScanCode | KeyboardFlag.KeyUp | KeyboardFlag.ExtendedKey
+                                                      : KeyboardFlag.ScanCode | KeyboardFlag.KeyUp),
+                                Time = 0,
+                                ExtraInfo = IntPtr.Zero
+                            }
+                    }
+                };
+
+            _inputList.Add(up);
+            return this;
+        }
+
+        /// <summary>
+        /// Adds a key press to the list of <see cref="Input"/> messages which is equivalent to a key down followed by a key up.
+        /// </summary>
+        /// <param name="dikCode">The <see cref="DirectInputKeyCode"/>.</param>
+        /// <returns>This <see cref="InputBuilder"/> instance.</returns>
+        public InputBuilder AddKeyPress(DirectInputKeyCode dikCode)
+        {
+            AddKeyDown(dikCode);
+            AddKeyUp(dikCode);
+            return this;
+        }
+        #endregion
+
         private static MouseFlag ToMouseButtonDownFlag(MouseButton button)
         {
             switch (button)
@@ -482,4 +572,5 @@ namespace WindowsInput
             }
         }
     }
+
 }
