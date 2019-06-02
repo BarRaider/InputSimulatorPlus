@@ -48,6 +48,15 @@ namespace WindowsInput
         IKeyboardSimulator ModifiedKeyStroke(IEnumerable<VirtualKeyCode> modifierKeyCodes, IEnumerable<VirtualKeyCode> keyCodes);
 
         /// <summary>
+        /// Manually creates a keystroke and delays the keyup by a specified number of ms.
+        /// The flow is Modifiers KeyDown in order, Keys Press in order, Modifiers KeyUp in reverse order.
+        /// </summary>
+        /// <param name="modifierKeyCodes">The list of <see cref="VirtualKeyCode"/>s for the modifier keys.</param>
+        /// <param name="keyCodes">The list of <see cref="VirtualKeyCode"/>s for the keys to simulate.</param>
+        /// <param name="delay">Delay in ms between keydown and keyup of final keyCode.</param>
+        IKeyboardSimulator DelayedModifiedKeyStroke(IEnumerable<VirtualKeyCode> modifierKeyCodes, IEnumerable<VirtualKeyCode> keyCodes, int delay);
+
+        /// <summary>
         /// Simulates a modified keystroke where there are multiple modifiers and one key like CTRL-ALT-C where CTRL and ALT are the modifierKeys and C is the key.
         /// The flow is Modifiers KeyDown in order, Key Press, Modifiers KeyUp in reverse order.
         /// </summary>

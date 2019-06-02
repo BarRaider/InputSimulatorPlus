@@ -462,7 +462,7 @@ namespace WindowsInput
 
         #region DIK scancodes
         /// <summary>
-        /// Adds a key down to the list of <see cref="Input"/> messages.
+        /// Adds a key down to the list of Input messages.
         /// </summary>
         /// <param name="dikCode">The <see cref="DirectInputKeyCode"/>.</param>
         /// <returns>This <see cref="InputBuilder"/> instance.</returns>
@@ -493,7 +493,7 @@ namespace WindowsInput
         }
 
         /// <summary>
-        /// Adds a key up to the list of <see cref="Input"/> messages.
+        /// Adds a key up to the list of Input messages.
         /// </summary>
         /// <param name="dikCode">The <see cref="DirectInputKeyCode"/>.</param>
         /// <returns>This <see cref="InputBuilder"/> instance.</returns>
@@ -524,7 +524,7 @@ namespace WindowsInput
         }
 
         /// <summary>
-        /// Adds a key press to the list of <see cref="Input"/> messages which is equivalent to a key down followed by a key up.
+        /// Adds a key press to the list of Input messages which is equivalent to a key down followed by a key up.
         /// </summary>
         /// <param name="dikCode">The <see cref="DirectInputKeyCode"/>.</param>
         /// <returns>This <see cref="InputBuilder"/> instance.</returns>

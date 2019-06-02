@@ -1,4 +1,6 @@
-﻿namespace WindowsInput.Native
+﻿using System;
+
+namespace WindowsInput.Native
 {
     /// <summary>
     /// The list of VirtualKeyCodes (see: http://msdn.microsoft.com/en-us/library/ms645540(VS.85).aspx)
@@ -935,5 +937,24 @@
         /// Clear key
         /// </summary>
         OEM_CLEAR = 0xFE,
+    }
+
+    /// <summary>
+    /// Extension class for VirtualKeyCode
+    /// </summary>
+    public static class VKExtend
+    {
+        /// <summary>
+        /// Returns the equivalent virtualkey for an input character
+        /// </summary>
+        /// <param name="VK"></param>
+        /// <param name="InputChar">Character to input</param>
+        /// <returns></returns>
+        public static VirtualKeyCode FromChar(this VirtualKeyCode VK, char InputChar)
+        {
+            InputChar = Convert.ToChar(InputChar.ToString().ToUpper());
+            int code = (byte)InputChar;
+            return (VirtualKeyCode)code;
+        }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using WindowsInput.Native;
+using System.Linq;
 
 namespace WindowsInput
 {
@@ -179,6 +180,45 @@ namespace WindowsInput
             ModifiersUp(builder, modifierKeyCodes);
 
             SendSimulatedInput(builder.ToArray());
+            return this;
+        }
+
+        /// <summary>
+        /// Manually creates a keystroke and delays the keyup by a specified number of ms.
+        /// The flow is Modifiers KeyDown in order, Keys Press in order, Modifiers KeyUp in reverse order.
+        /// </summary>
+        /// <param name="modifierKeyCodes">The list of modifier keys</param>
+        /// <param name="keyCodes">The list of keys to simulate</param>
+        /// <param name="delay">Delay in ms between keydown and keyup of final keyCode. 50ms should be minimum</param>
+        public IKeyboardSimulator DelayedModifiedKeyStroke(IEnumerable<VirtualKeyCode> modifierKeyCodes, IEnumerable<VirtualKeyCode> keyCodes, int delay)
+        {
+            foreach (var keyCode in modifierKeyCodes)
+            {
+                var inputList = new InputBuilder().AddKeyDown(keyCode).ToArray();
+                SendSimulatedInput(inputList);
+            }
+
+            foreach (var keyCode in keyCodes)
+            {
+                var inputList = new InputBuilder().AddKeyDown(keyCode).ToArray();
+                SendSimulatedInput(inputList);
+            }
+
+            Thread.Sleep(delay);
+
+
+            foreach (var keyCode in keyCodes.Reverse())
+            {
+                var inputList = new InputBuilder().AddKeyUp(keyCode).ToArray();
+                SendSimulatedInput(inputList);
+            }
+
+            foreach (var keyCode in modifierKeyCodes.Reverse())
+            {
+                var inputList = new InputBuilder().AddKeyUp(keyCode).ToArray();
+                SendSimulatedInput(inputList);
+            }
+
             return this;
         }
 
