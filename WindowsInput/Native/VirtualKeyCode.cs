@@ -937,6 +937,56 @@ namespace WindowsInput.Native
         /// Clear key
         /// </summary>
         OEM_CLEAR = 0xFE,
+
+        /// <summary>
+        /// Super Macro Extended Numpad Up
+        /// </summary>
+        NUMPAD_UP = 0x100,
+
+        /// <summary>
+        /// Super Macro Extended Numpad Down
+        /// </summary>
+        NUMPAD_DOWN = 0x101,
+
+        /// <summary>
+        /// Super Macro Extended Numpad Left
+        /// </summary>
+        NUMPAD_LEFT = 0x102,
+
+        /// <summary>
+        /// Super Macro Extended Numpad Right
+        /// </summary>
+        NUMPAD_RIGHT = 0x103,
+
+        /// <summary>
+        /// Super Macro Extended Numpad Home
+        /// </summary>
+        NUMPAD_HOME = 0x104,
+
+        /// <summary>
+        /// Super Macro Extended Numpad End
+        /// </summary>
+        NUMPAD_END = 0x105,
+
+        /// <summary>
+        /// Super Macro Extended Numpad Insert
+        /// </summary>
+        NUMPAD_INSERT = 0x106,
+
+        /// <summary>
+        /// Super Macro Extended Numpad Del
+        /// </summary>
+        NUMPAD_DEL = 0x107,
+
+        /// <summary>
+        /// Super Macro Extended Numpad Page up
+        /// </summary>
+        NUMPAD_PAGEUP = 0x108,
+
+        /// <summary>
+        /// Super Macro Extended Numpad Page down
+        /// </summary>
+        NUMPAD_PAGEDOWN = 0x109,
     }
 
     /// <summary>

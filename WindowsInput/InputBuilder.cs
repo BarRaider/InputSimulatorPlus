@@ -80,10 +80,10 @@ namespace WindowsInput
         /// </remarks>
         public static bool IsExtendedKey(VirtualKeyCode keyCode)
         {
-            if (keyCode == VirtualKeyCode.MENU ||
+            if (//keyCode == VirtualKeyCode.MENU ||
                 //keyCode == VirtualKeyCode.LMENU ||
                 keyCode == VirtualKeyCode.RMENU ||
-                keyCode == VirtualKeyCode.CONTROL ||
+                //keyCode == VirtualKeyCode.CONTROL ||
                 keyCode == VirtualKeyCode.RCONTROL ||
                 keyCode == VirtualKeyCode.INSERT ||
                 keyCode == VirtualKeyCode.DELETE ||
@@ -115,6 +115,8 @@ namespace WindowsInput
         /// <returns>This <see cref="InputBuilder"/> instance.</returns>
         public InputBuilder AddKeyDown(VirtualKeyCode keyCode)
         {
+            keyCode = DetermineCorrectKeyCodeAndExtended(keyCode, out bool isExtended);
+
             // The specification says Scan is unused unless we are using KEYEVENTF_UNICODE or KEYEVENTF_SCANCODE.
             // However, some applications like Microsoft's Remote Desktop Client assume it is the scan code, even
             // when KEYEVENTF_SCANCODE is not set.  Set the value to work around these buggy apps.
@@ -130,10 +132,12 @@ namespace WindowsInput
                                     new KEYBDINPUT
                                         {
                                             KeyCode = (UInt16) keyCode,
+                                            Scan = scan,
+                                            Flags = isExtended ? (UInt32) KeyboardFlag.ExtendedKey : 0,
                                         //Scan = (UInt16)(NativeMethods.MapVirtualKey((UInt32)keyCode, 0) & 0xFFU),
                                         //Flags = IsExtendedKey(keyCode) ? (UInt32) KeyboardFlag.ExtendedKey : 0,
-                                        Scan = scan,
-                                        Flags = (scan > 0x7F) ? (uint) KeyboardFlag.ExtendedKey : 0,
+                                        
+                                        //Flags = (scan > 0x7F) ? (uint) KeyboardFlag.ExtendedKey : 0,
                                             Time = 0,
                                             ExtraInfo = IntPtr.Zero
                                         }
@@ -151,11 +155,13 @@ namespace WindowsInput
         /// <returns>This <see cref="InputBuilder"/> instance.</returns>
         public InputBuilder AddKeyUp(VirtualKeyCode keyCode)
         {
+            keyCode = DetermineCorrectKeyCodeAndExtended(keyCode, out bool isExtended);
+
             // The specification says Scan is unused unless we are using KEYEVENTF_UNICODE or KEYEVENTF_SCANCODE.
             // However, some applications like Microsoft's Remote Desktop Client assume it is the scan code, even
             // when KEYEVENTF_SCANCODE is not set.  Set the value to work around these buggy apps.
             ushort scan = (ushort)NativeMethods.MapVirtualKey((uint)keyCode, NativeMethods.MapVirtualKeyMapTypes.MapvkVkToVsc);
-            var up =
+                var up =
                 new INPUT
                     {
                         Type = (UInt32) InputType.Keyboard,
@@ -166,11 +172,12 @@ namespace WindowsInput
                                         {
                                             KeyCode = (UInt16) keyCode,
                                             //Scan = (UInt16)(NativeMethods.MapVirtualKey((UInt32)keyCode, 0) & 0xFFU),
-                                            //Flags = (UInt32) (IsExtendedKey(keyCode)
+                                            //Flags = (uint) (IsExtendedKey(keyCode) ? (KeyboardFlag.ExtendedKey | KeyboardFlag.KeyUp) : KeyboardFlag.KeyUp),
                                             Scan = scan,
-                                            Flags = (uint)((scan > 0x7F)
+                                            Flags = (uint) (isExtended ? (KeyboardFlag.ExtendedKey | KeyboardFlag.KeyUp) : KeyboardFlag.KeyUp),
+                                            /*Flags = (uint)((scan > 0x7F)
                                                                   ? KeyboardFlag.KeyUp | KeyboardFlag.ExtendedKey
-                                                                  : KeyboardFlag.KeyUp),
+                                                                  : KeyboardFlag.KeyUp),*/
                                             Time = 0,
                                             ExtraInfo = IntPtr.Zero
                                         }
@@ -570,6 +577,53 @@ namespace WindowsInput
                 default:
                     return MouseFlag.LeftUp;
             }
+        }
+
+        private static VirtualKeyCode DetermineCorrectKeyCodeAndExtended(VirtualKeyCode originalKeyCode, out bool isExtended)
+        {
+            if (IsExtendedKey(originalKeyCode)) // No change is needed for keys in the IsExtendedKey function
+            {
+                isExtended = true;
+                return originalKeyCode;
+            }
+
+            if ((int)originalKeyCode > 0xFE) // Fake Super Macro Keycode
+            {
+                isExtended = false;
+                return TranslateSuperMacroKeyCodeToOriginalKeyCode(originalKeyCode);
+            }
+
+            ushort scan = (ushort)NativeMethods.MapVirtualKey((uint)originalKeyCode, NativeMethods.MapVirtualKeyMapTypes.MapvkVkToVsc);
+            isExtended = scan > 0x7F; // Any key that is > 0x7F and NOT one of the keycodes from above
+            return originalKeyCode;
+        }
+
+        private static VirtualKeyCode TranslateSuperMacroKeyCodeToOriginalKeyCode(VirtualKeyCode originalKeyCode)
+        {
+            switch (originalKeyCode)
+            {
+                case (VirtualKeyCode.NUMPAD_UP):
+                    return VirtualKeyCode.UP;
+                case (VirtualKeyCode.NUMPAD_DOWN):
+                    return VirtualKeyCode.DOWN;
+                case (VirtualKeyCode.NUMPAD_LEFT):
+                    return VirtualKeyCode.LEFT;
+                case (VirtualKeyCode.NUMPAD_RIGHT):
+                    return VirtualKeyCode.RIGHT;
+                case (VirtualKeyCode.NUMPAD_HOME):
+                    return VirtualKeyCode.HOME;
+                case (VirtualKeyCode.NUMPAD_END):
+                    return VirtualKeyCode.END;
+                case (VirtualKeyCode.NUMPAD_INSERT):
+                    return VirtualKeyCode.INSERT;
+                case (VirtualKeyCode.NUMPAD_DEL):
+                    return VirtualKeyCode.DELETE;
+                case (VirtualKeyCode.NUMPAD_PAGEUP):
+                    return VirtualKeyCode.PRIOR;
+                case (VirtualKeyCode.NUMPAD_PAGEDOWN):
+                    return VirtualKeyCode.NEXT;
+            }
+            return VirtualKeyCode.ZOOM;
         }
     }
 
